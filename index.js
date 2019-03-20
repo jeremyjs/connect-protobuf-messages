@@ -2,6 +2,8 @@
 
 var protobuf = require('protobufjs');
 
+var ROOT_URL = 'src/main/protobuf/'
+
 var ConnectProtobufMessages = function (params) {
     this.params = params;
     this.builder = undefined;
@@ -9,6 +11,7 @@ var ConnectProtobufMessages = function (params) {
     this.names = {};
     this.messages = {};
     this.enums = {};
+    this.rootUrl = ROOT_URL;
 };
 
 ConnectProtobufMessages.prototype.encode = function (payloadType, params, clientMsgId) {

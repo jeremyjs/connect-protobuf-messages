@@ -18,17 +18,15 @@ test(t => {
     protobufMessages.build();
 
     const
-        ProtoPingReq = protobufMessages.getMessageByName('ProtoPingReq'),
-        protoPingReq = new ProtoPingReq({
-            timestamp: Date.now()
-        }),
+        ProtoHeartbeatEvent = protobufMessages.getMessageByName('ProtoHeartbeatEvent'),
+        protoPingReq = new ProtoHeartbeatEvent(),
         clientMsgId = 'test',
-        payloadType = 52;
+        payloadType = 51;
 
     t.deepEqual(
-        protoPingReq.timestamp,
         protobufMessages.decode(
             protobufMessages.encode(payloadType, protoPingReq, clientMsgId)
-        ).payload.timestamp
+        ).payload.payloadType,
+        payloadType
     );
 });
