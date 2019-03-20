@@ -1,9 +1,15 @@
 'use strict';
 
+var path = require('path');
 var protobuf = require('protobufjs');
 
-var ConnectProtobufMessages = function (params) {
-    this.params = params;
+var PROTO_FILE_PATHS = [
+    require.resolve('connect-protobuf-messages/OpenApiCommonMessages.proto'),
+    require.resolve('connect-protobuf-messages/OpenApiMessages.proto'),
+];
+
+var OpenApiProtocol = function () {
+    this.filepaths = PROTO_FILE_PATHS;
     this.builder = undefined;
     this.payloadTypes = {};
     this.names = {};
@@ -11,14 +17,14 @@ var ConnectProtobufMessages = function (params) {
     this.enums = {};
 };
 
-ConnectProtobufMessages.prototype.encode = function (payloadType, params, clientMsgId) {
+OpenApiProtocol.prototype.encode = function (payloadType, params, clientMsgId) {
     var Message = this.getMessageByPayloadType(payloadType);
     var message = new Message(params);
 
     return this.wrap(payloadType, message, clientMsgId).encode();
 };
 
-ConnectProtobufMessages.prototype.wrap = function (payloadType, message, clientMsgId) {
+OpenApiProtocol.prototype.wrap = function (payloadType, message, clientMsgId) {
     var ProtoMessage = this.getMessageByName('ProtoMessage');
 
     return new ProtoMessage({
@@ -28,7 +34,7 @@ ConnectProtobufMessages.prototype.wrap = function (payloadType, message, clientM
     });
 };
 
-ConnectProtobufMessages.prototype.decode = function (buffer) {
+OpenApiProtocol.prototype.decode = function (buffer) {
     var ProtoMessage = this.getMessageByName('ProtoMessage');
     var protoMessage = ProtoMessage.decode(buffer);
     var payloadType = protoMessage.payloadType;
@@ -40,24 +46,24 @@ ConnectProtobufMessages.prototype.decode = function (buffer) {
     };
 };
 
-ConnectProtobufMessages.prototype.load = function () {
-    this.params.map(function (param) {
-        this.builder = protobuf.loadProtoFile(param.file, this.builder);
+OpenApiProtocol.prototype.load = function () {
+    this.filepaths.map(function (filepath) {
+        this.builder = protobuf.loadProtoFile(filepath, this.builder);
     }, this);
 };
 
 
-ConnectProtobufMessages.prototype.markFileAsLoadedForImport = function (protoFile) {
+OpenApiProtocol.prototype.markFileAsLoadedForImport = function (protoFile) {
     this.rootUrl = this.rootUrl || (protoFile.url.replace(/\/[^\/]*$/, '') + '/');
     this.builder.files[this.rootUrl + protoFile.name] = true;
 };
 
-ConnectProtobufMessages.prototype.loadFile = function (protoFile) {
+OpenApiProtocol.prototype.loadFile = function (protoFile) {
     this.builder = protobuf.loadProtoFile(protoFile.url, this.builder);
     this.markFileAsLoadedForImport(protoFile);
 };
 
-ConnectProtobufMessages.prototype.build = function () {
+OpenApiProtocol.prototype.build = function () {
     var builder = this.builder;
 
     builder.build();
@@ -107,7 +113,7 @@ ConnectProtobufMessages.prototype.build = function () {
     this.buildWrapper();
 };
 
-ConnectProtobufMessages.prototype.buildWrapper = function () {
+OpenApiProtocol.prototype.buildWrapper = function () {
     var name = 'ProtoMessage';
     var messageBuilded = this.builder.build(name);
     this.messages[name] = messageBuilded;
@@ -117,7 +123,7 @@ ConnectProtobufMessages.prototype.buildWrapper = function () {
     };
 };
 
-ConnectProtobufMessages.prototype.findPayloadType = function (message) {
+OpenApiProtocol.prototype.findPayloadType = function (message) {
     var field = message.children.find(function (field) {
         return field.name === 'payloadType';
     });
@@ -127,16 +133,47 @@ ConnectProtobufMessages.prototype.findPayloadType = function (message) {
     }
 };
 
-ConnectProtobufMessages.prototype.getMessageByPayloadType = function (payloadType) {
+OpenApiProtocol.prototype.getMessageByPayloadType = function (payloadType) {
+    this.errorOnPayloadTypeMissing(payloadType);
     return this.payloadTypes[payloadType].messageBuilded;
 };
 
-ConnectProtobufMessages.prototype.getMessageByName = function (name) {
+OpenApiProtocol.prototype.getMessageByName = function (name) {
+    this.errorOnNameMissing(name);
     return this.names[name].messageBuilded;
 };
 
-ConnectProtobufMessages.prototype.getPayloadTypeByName = function (name) {
+OpenApiProtocol.prototype.getPayloadTypeByName = function (name) {
+    this.errorOnNameMissing(name);
     return this.names[name].payloadType;
 };
 
-module.exports = ConnectProtobufMessages;
+OpenApiProtocol.prototype.errorOnPayloadTypeMissing = function (payloadType) {
+    const payload_type_keys = Object.keys(this.payloadTypes)
+    
+    if (!payload_type_keys.includes(String(payloadType))) {
+        if (payload_type_keys.length === 0) {
+            throw new Error(
+                `Warning: No payload types: ${this.payloadTypes} imported from files: ${this.filenames}`
+            );
+        }
+        
+        throw new Error(`Payload type: ${payloadType} not found in files: ${this.filenames}`);
+    }
+}
+
+OpenApiProtocol.prototype.errorOnNameMissing = function (name) {
+    const name_keys = Object.keys(this.names)
+    
+    if (!name_keys.includes(name)) {
+        if (name_keys.length === 0) {
+            throw new Error(
+                `Warning: No names: ${this.names} imported from files: ${this.filenames}`
+            );
+        }
+        
+        throw new Error(`${name} not found in files: ${this.filenames}`);
+    }
+}
+
+module.exports = OpenApiProtocol;

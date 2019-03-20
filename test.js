@@ -1,34 +1,20 @@
-import test from 'ava';
-import ProtobufMessages from './index';
+const test = require('ava');
+const OpenApiProtocol = require('./index');
 
 test(t => {
-    const
-        protobufMessages = new ProtobufMessages([
-            {
-                file: 'src/main/protobuf/CommonMessages.proto',
-                protoPayloadType: 'ProtoPayloadType'
-            },
-            {
-                file: 'src/main/protobuf/OpenApiMessages.proto',
-                protoPayloadType: 'ProtoOAPayloadType'
-            }
-        ]);
+    const protocol = new OpenApiProtocol();
+    protocol.load();
+    protocol.build();
 
-    protobufMessages.load();
-    protobufMessages.build();
-
-    const
-        ProtoPingReq = protobufMessages.getMessageByName('ProtoPingReq'),
-        protoPingReq = new ProtoPingReq({
-            timestamp: Date.now()
-        }),
-        clientMsgId = 'test',
-        payloadType = 52;
+    const ProtoOAVersionReq = protocol.getMessageByName('ProtoOAVersionReq')
+    const protoPingReq = new ProtoOAVersionReq()
+    const clientMsgId = 'test'
+    const payloadType = 2104
 
     t.deepEqual(
-        protoPingReq.timestamp,
-        protobufMessages.decode(
-            protobufMessages.encode(payloadType, protoPingReq, clientMsgId)
-        ).payload.timestamp
+        protocol.decode(
+            protocol.encode(payloadType, protoPingReq, clientMsgId)
+        ).payload.payloadType,
+        payloadType
     );
 });
