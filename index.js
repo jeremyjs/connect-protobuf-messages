@@ -2,16 +2,16 @@
 
 var protobuf = require('protobufjs');
 
-var ROOT_URL = 'src/main/protobuf/'
+var ROOT_URL = 'src/main/protobuf'
 
 var ConnectProtobufMessages = function (params) {
     this.params = params;
+    this.filenames = this.params.map(function (param) { return param.file; })
     this.builder = undefined;
     this.payloadTypes = {};
     this.names = {};
     this.messages = {};
     this.enums = {};
-    this.rootUrl = ROOT_URL;
 };
 
 ConnectProtobufMessages.prototype.encode = function (payloadType, params, clientMsgId) {
@@ -45,12 +45,15 @@ ConnectProtobufMessages.prototype.decode = function (buffer) {
 
 ConnectProtobufMessages.prototype.load = function () {
     this.params.map(function (param) {
-        this.builder = protobuf.loadProtoFile(param.file, this.builder);
+        const filename = `${ROOT_URL}/${param.file}`
+        console.log(filename)
+        this.builder = protobuf.loadProtoFile(filename, this.builder);
     }, this);
 };
 
 
 ConnectProtobufMessages.prototype.markFileAsLoadedForImport = function (protoFile) {
+    console.log(protoFile)
     this.rootUrl = this.rootUrl || (protoFile.url.replace(/\/[^\/]*$/, '') + '/');
     this.builder.files[this.rootUrl + protoFile.name] = true;
 };
@@ -139,6 +142,11 @@ ConnectProtobufMessages.prototype.getMessageByName = function (name) {
 };
 
 ConnectProtobufMessages.prototype.getPayloadTypeByName = function (name) {
+    if (!Object.keys(this.names).includes(name)) {
+        console.debug(this.names)
+        console.debug(Object.keys(this.names))
+        throw new Error(`${name} not found in files: ${this.filenames}`);
+    }
     return this.names[name].payloadType;
 };
 

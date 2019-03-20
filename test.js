@@ -5,11 +5,11 @@ test(t => {
     const
         protobufMessages = new ProtobufMessages([
             {
-                file: 'src/main/protobuf/CommonMessages.proto',
+                file: 'CommonMessages.proto',
                 protoPayloadType: 'ProtoPayloadType'
             },
             {
-                file: 'src/main/protobuf/OpenApiMessages.proto',
+                file: 'OpenApiMessages.proto',
                 protoPayloadType: 'ProtoOAPayloadType'
             }
         ]);
