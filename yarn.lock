@@ -922,10 +922,6 @@ configstore@^2.0.0:
     write-file-atomic "^1.1.2"
     xdg-basedir "^2.0.0"
 
-connect-protobuf-messages@jeremyjs/Open-API-2.0-protobuf-messages#v6.0.0:
-  version "0.0.0"
-  resolved "https://codeload.github.com/jeremyjs/Open-API-2.0-protobuf-messages/tar.gz/2f5bbbe50ef81222af4cfdec55adb1ce6828eb3e"
-
 console-control-strings@^1.0.0, console-control-strings@~1.1.0:
   version "1.1.0"
   resolved "https://registry.yarnpkg.com/console-control-strings/-/console-control-strings-1.1.0.tgz#3d7cf4464db6446ea644bf4b39507f9851008e8e"
@@ -2422,6 +2418,14 @@ onetime@^2.0.0:
   integrity sha1-BnQoIw/WdEOyeUsiu6UotoZ5YtQ=
   dependencies:
     mimic-fn "^1.0.0"
+
+open-api-protobuf-messages-v59@jeremyjs/Open-API-2.0-protobuf-messages#v5.9.1:
+  version "0.0.0"
+  resolved "https://codeload.github.com/jeremyjs/Open-API-2.0-protobuf-messages/tar.gz/e0c18102f8710af58a0c819a18f6891411dfc7a1"
+
+open-api-protobuf-messages-v60@jeremyjs/Open-API-2.0-protobuf-messages#v6.0.0:
+  version "0.0.0"
+  resolved "https://codeload.github.com/jeremyjs/Open-API-2.0-protobuf-messages/tar.gz/2f5bbbe50ef81222af4cfdec55adb1ce6828eb3e"
 
 option-chain@^0.1.0:
   version "0.1.1"

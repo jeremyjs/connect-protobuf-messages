@@ -1,15 +1,26 @@
 'use strict';
 
-var path = require('path');
 var protobuf = require('protobufjs');
 
-var PROTO_FILE_PATHS = [
-    require.resolve('connect-protobuf-messages/OpenApiCommonMessages.proto'),
-    require.resolve('connect-protobuf-messages/OpenApiMessages.proto'),
-];
+var VERSION_CONFIG_MAP = {
+    '59': {
+        resolve_names: [
+            'open-api-protobuf-messages-v59/CommonMessages.proto',
+            'open-api-protobuf-messages-v59/OpenApiMessages.proto',
+        ],
+    },
+    '60': {
+        resolve_names: [
+            'open-api-protobuf-messages-v60/OpenApiCommonMessages.proto',
+            'open-api-protobuf-messages-v60/OpenApiMessages.proto',
+        ],
+    },
+}
 
-var OpenApiProtocol = function () {
-    this.filepaths = PROTO_FILE_PATHS;
+var OpenApiProtocol = function ({ version = '60' } = {}) {
+    this.version = version
+    this.version_config = VERSION_CONFIG_MAP[version]
+    this.filepaths = this.version_config.resolve_names.map(require.resolve);
     this.builder = undefined;
     this.payloadTypes = {};
     this.names = {};
