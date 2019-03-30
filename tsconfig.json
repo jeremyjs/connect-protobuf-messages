@@ -1,0 +1,18 @@
+{
+  "compilerOptions": {
+    "target": "es5",
+    "module": "commonjs",
+    "lib": ["es5", "es2015", "es2015.symbol", "esnext", "dom"],
+    "strict": true,
+    "noImplicitAny": false,
+    "moduleResolution": "node",
+    "types": ["ava", "node"],
+    "esModuleInterop": true
+  },
+  "files": [
+    "index.ts"
+  ],
+  "exclude": [
+    "node_modules"
+  ]
+}
