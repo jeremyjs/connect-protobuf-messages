@@ -1,4 +1,4 @@
-import protobuf from 'protobufjs'
+import protobuf, { Root } from 'protobufjs'
 
 const VERSION_CONFIG_MAP = {
   '59': {
@@ -24,178 +24,104 @@ export class OpenApiProtocol {
   public enums
 
   private version_config
-  private builder
   private rootUrl
+  private namespace_root: Root
 
   constructor({ version = '60' } = {}) {
     this.version = version
     this.version_config = VERSION_CONFIG_MAP[version]
     this.filepaths = this.version_config.resolve_names.map(require.resolve)
-    this.builder = undefined
     this.payloadTypes = {}
     this.names = {}
     this.messages = {}
     this.enums = {}
+    this.namespace_root = new Root()
   }
 
-  public encode (payloadType, params, clientMsgId) {
-    const Message = this.getMessageByPayloadType(payloadType)
-    const message = new Message(params)
+  public encode (payload_name, params, client_msg_id) {
+    const TypeClass = this.getClassByName(payload_name)
+    const payload_type = this.getTypeByClass(TypeClass)
+    
+    TypeClass.verify(params)
+    
+    const ProtoMessage = this.getClassByName('ProtoMessage')
 
-    return this.wrap(payloadType, message, clientMsgId).encode()
-  }
-
-  public wrap (payloadType, message, clientMsgId) {
-    const ProtoMessage = this.getMessageByName('ProtoMessage')
-
-    return new ProtoMessage({
-      payloadType: payloadType,
-      payload: message.toBuffer(),
-      clientMsgId: clientMsgId
+    return ProtoMessage.create({
+      payloadType: payload_type,
+      payload: TypeClass.encode(params).finish(),
+      clientMsgId: client_msg_id
     })
   }
 
   public decode (buffer) {
-    const ProtoMessage = this.getMessageByName('ProtoMessage')
-    const protoMessage = ProtoMessage.decode(buffer)
-    const payloadType = protoMessage.payloadType
+    const ProtoMessageClass = this.getClassByName('ProtoMessage')
+    const proto_message: any = ProtoMessageClass.decode(buffer)
+    const payload_type = proto_message.payloadType
+    const TypeClass = this.getClassbyType(payload_type)
+    const payload = TypeClass.decode(proto_message.payload)
 
     return {
-      payload: this.getMessageByPayloadType(payloadType).decode(
-        protoMessage.payload,
-      ),
-      payloadType,
-      clientMsgId: protoMessage.clientMsgId,
+      payloadType: payload_type,
+      payload,
+      clientMsgId: proto_message.clientMsgId,
     }
   }
 
-  public load () {
-    this.filepaths.map((filepath) => {
-      this.builder = protobuf.loadProtoFile(filepath, this.builder)
-    })
-  }
-
-  public markFileAsLoadedForImport (protoFile) {
-    this.rootUrl = this.rootUrl || protoFile.url.replace(/\/[^\/]*$/, '') + '/'
-    this.builder.files[this.rootUrl + protoFile.name] = true
-  }
-
-  public loadFile (protoFile) {
-    this.builder = protobuf.loadProtoFile(protoFile.url, this.builder)
-    this.markFileAsLoadedForImport(protoFile)
-  }
-
-  public build () {
-    const builder = this.builder
-
-    builder.build()
-
-    const messages: any[] = []
-    const enums: any[] = []
-
-    builder.ns.children.forEach((reflect) => {
-      const className = reflect.className
-
-      if (className === 'Message') {
-        messages.push(reflect)
-      } else if (className === 'Enum') {
-        enums.push(reflect)
-      }
-    })
-
-    messages
-      .filter((message) => {
-        return typeof this.findPayloadType(message) === 'number'
+  public async load () {
+    await Promise.all(
+      this.filepaths.map(async (filepath) => {
+        const root = await protobuf.load(filepath)
+        this.namespace_root = Root.fromJSON(Object.assign({}, this.namespace_root, root.toJSON()))
       })
-      .forEach((message) => {
-        const name = message.name
-
-        const messageBuilded = builder.build(name)
-
-        this.messages[name] = messageBuilded
-
-        const payloadType = this.findPayloadType(message)
-
-        this.names[name] = {
-          messageBuilded: messageBuilded,
-          payloadType: payloadType
-        }
-        this.payloadTypes[payloadType] = {
-          messageBuilded: messageBuilded,
-          name: name
-        }
-      }, this)
-
-    enums.forEach((item) => {
-      const name = item.name
-      enums[name] = builder.build(name)
-    })
-
-    this.buildWrapper()
+    )
+    .catch(console.error)
   }
 
-  public buildWrapper () {
-    const name = 'ProtoMessage'
-    const messageBuilded = this.builder.build(name)
-    this.messages[name] = messageBuilded
-    this.names[name] = {
-      messageBuilded: messageBuilded,
-      payloadType: undefined
-    }
-  }
+  // TODO: lookupEnum
 
-  public findPayloadType (message) {
-    const field = message.children.find((field) => {
-      return field.name === 'payloadType'
-    })
-
-    if (field) {
-      return field.defaultValue
-    }
-  }
-
-  public getMessageByPayloadType (payloadType) {
-    this.errorOnPayloadTypeMissing(payloadType)
-    return this.payloadTypes[payloadType].messageBuilded
-  }
-
-  public getMessageByName (name) {
-    this.errorOnNameMissing(name)
-    return this.names[name].messageBuilded
-  }
-
-  public getPayloadTypeByName (name) {
-    this.errorOnNameMissing(name)
-    return this.names[name].payloadType
-  }
-
-  public errorOnPayloadTypeMissing (payloadType) {
-    const payload_type_keys = Object.keys(this.payloadTypes)
-
-    if (!payload_type_keys.includes(String(payloadType))) {
-      if (payload_type_keys.length === 0) {
+  public getClassByName (name) {
+    // if (name_keys.length === 0) {
+    //   throw new Error(
+    //     `Warning: No names: ${this.names} imported from files: ${this.filepaths}`
+    //   )
+    // }
+    try {
+      return this.namespace_root.lookupType(name)
+    } catch (e) {
+      if (e.message.includes('no such type')) {
         throw new Error(
-          `Warning: No payload types: ${this.payloadTypes} imported from files: ${this.filepaths}`
+          `type \`${name}\` not found in files:\n` +
+          this.version_config.resolve_names.join('\n')
         )
+      } else {
+        throw e
       }
-
-      throw new Error(
-        `Payload type: ${payloadType} not found in files: ${this.filepaths}`
-      )
     }
   }
 
-  public errorOnNameMissing (name) {
-    const name_keys = Object.keys(this.names)
+  public getTypeByClass (TypeClass) {
+    const PayloadTypeEnum = this.namespace_root.lookupEnum('ProtoOAPayloadType')
+    console.log(PayloadTypeEnum)
+    return 0
+  }
 
-    if (!name_keys.includes(name)) {
-      if (name_keys.length === 0) {
-        throw new Error(
-          `Warning: No names: ${this.names} imported from files: ${this.filepaths}`
-        )
-      }
-
-      throw new Error(`${name} not found in files: ${this.filepaths}`)
-    }
+  public getClassbyType (payload_type) {
+    const PayloadTypeEnum = this.namespace_root.lookupEnum('ProtoOAPayloadType')
+    console.log(PayloadTypeEnum)
+    return this.namespace_root.lookupType('ProtoMessage')
   }
 }
+
+// try {
+//   const main = async () => {
+//     const protocol = new OpenApiProtocol({ version: '60' })
+//     await protocol.load()
+//     const message_1 = protocol.getClassByName('ProtoOAApplicationAuthReq')
+//     console.log('message_1:', message_1)
+//     const message = protocol.getClassByName('foobar')
+//   }
+
+//   main().then(() => process.exit(0)).catch(console.error)
+// } catch (e) {
+//   console.error(e)
+// }

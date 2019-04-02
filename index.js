@@ -1,9 +1,48 @@
 "use strict";
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : new P(function (resolve) { resolve(result.value); }).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
+var __generator = (this && this.__generator) || function (thisArg, body) {
+    var _ = { label: 0, sent: function() { if (t[0] & 1) throw t[1]; return t[1]; }, trys: [], ops: [] }, f, y, t, g;
+    return g = { next: verb(0), "throw": verb(1), "return": verb(2) }, typeof Symbol === "function" && (g[Symbol.iterator] = function() { return this; }), g;
+    function verb(n) { return function (v) { return step([n, v]); }; }
+    function step(op) {
+        if (f) throw new TypeError("Generator is already executing.");
+        while (_) try {
+            if (f = 1, y && (t = op[0] & 2 ? y["return"] : op[0] ? y["throw"] || ((t = y["return"]) && t.call(y), 0) : y.next) && !(t = t.call(y, op[1])).done) return t;
+            if (y = 0, t) op = [op[0] & 2, t.value];
+            switch (op[0]) {
+                case 0: case 1: t = op; break;
+                case 4: _.label++; return { value: op[1], done: false };
+                case 5: _.label++; y = op[1]; op = [0]; continue;
+                case 7: op = _.ops.pop(); _.trys.pop(); continue;
+                default:
+                    if (!(t = _.trys, t = t.length > 0 && t[t.length - 1]) && (op[0] === 6 || op[0] === 2)) { _ = 0; continue; }
+                    if (op[0] === 3 && (!t || (op[1] > t[0] && op[1] < t[3]))) { _.label = op[1]; break; }
+                    if (op[0] === 6 && _.label < t[1]) { _.label = t[1]; t = op; break; }
+                    if (t && _.label < t[2]) { _.label = t[2]; _.ops.push(op); break; }
+                    if (t[2]) _.ops.pop();
+                    _.trys.pop(); continue;
+            }
+            op = body.call(thisArg, _);
+        } catch (e) { op = [6, e]; y = 0; } finally { f = t = 0; }
+        if (op[0] & 5) throw op[1]; return { value: op[0] ? op[1] : void 0, done: true };
+    }
+};
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (Object.hasOwnProperty.call(mod, k)) result[k] = mod[k];
+    result["default"] = mod;
+    return result;
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-var protobufjs_1 = __importDefault(require("protobufjs"));
+var protobufjs_1 = __importStar(require("protobufjs"));
 var VERSION_CONFIG_MAP = {
     '59': {
         resolve_names: [
@@ -24,135 +63,102 @@ var OpenApiProtocol = /** @class */ (function () {
         this.version = version;
         this.version_config = VERSION_CONFIG_MAP[version];
         this.filepaths = this.version_config.resolve_names.map(require.resolve);
-        this.builder = undefined;
         this.payloadTypes = {};
         this.names = {};
         this.messages = {};
         this.enums = {};
+        this.namespace_root = new protobufjs_1.Root();
     }
-    OpenApiProtocol.prototype.encode = function (payloadType, params, clientMsgId) {
-        var Message = this.getMessageByPayloadType(payloadType);
-        var message = new Message(params);
-        return this.wrap(payloadType, message, clientMsgId).encode();
-    };
-    OpenApiProtocol.prototype.wrap = function (payloadType, message, clientMsgId) {
-        var ProtoMessage = this.getMessageByName('ProtoMessage');
-        return new ProtoMessage({
-            payloadType: payloadType,
-            payload: message.toBuffer(),
-            clientMsgId: clientMsgId
+    OpenApiProtocol.prototype.encode = function (payload_name, params, client_msg_id) {
+        var TypeClass = this.getClassByName(payload_name);
+        var payload_type = this.getTypeByClass(TypeClass);
+        TypeClass.verify(params);
+        var ProtoMessage = this.getClassByName('ProtoMessage');
+        return ProtoMessage.create({
+            payloadType: payload_type,
+            payload: TypeClass.encode(params).finish(),
+            clientMsgId: client_msg_id
         });
     };
     OpenApiProtocol.prototype.decode = function (buffer) {
-        var ProtoMessage = this.getMessageByName('ProtoMessage');
-        var protoMessage = ProtoMessage.decode(buffer);
-        var payloadType = protoMessage.payloadType;
+        var ProtoMessageClass = this.getClassByName('ProtoMessage');
+        var proto_message = ProtoMessageClass.decode(buffer);
+        var payload_type = proto_message.payloadType;
+        var TypeClass = this.getClassbyType(payload_type);
+        var payload = TypeClass.decode(proto_message.payload);
         return {
-            payload: this.getMessageByPayloadType(payloadType).decode(protoMessage.payload),
-            payloadType: payloadType,
-            clientMsgId: protoMessage.clientMsgId,
+            payloadType: payload_type,
+            payload: payload,
+            clientMsgId: proto_message.clientMsgId,
         };
     };
     OpenApiProtocol.prototype.load = function () {
-        var _this = this;
-        this.filepaths.map(function (filepath) {
-            _this.builder = protobufjs_1.default.loadProtoFile(filepath, _this.builder);
+        return __awaiter(this, void 0, void 0, function () {
+            var _this = this;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0: return [4 /*yield*/, Promise.all(this.filepaths.map(function (filepath) { return __awaiter(_this, void 0, void 0, function () {
+                            var root;
+                            return __generator(this, function (_a) {
+                                switch (_a.label) {
+                                    case 0: return [4 /*yield*/, protobufjs_1.default.load(filepath)];
+                                    case 1:
+                                        root = _a.sent();
+                                        this.namespace_root = protobufjs_1.Root.fromJSON(Object.assign({}, this.namespace_root, root.toJSON()));
+                                        return [2 /*return*/];
+                                }
+                            });
+                        }); }))
+                            .catch(console.error)];
+                    case 1:
+                        _a.sent();
+                        return [2 /*return*/];
+                }
+            });
         });
     };
-    OpenApiProtocol.prototype.markFileAsLoadedForImport = function (protoFile) {
-        this.rootUrl = this.rootUrl || protoFile.url.replace(/\/[^\/]*$/, '') + '/';
-        this.builder.files[this.rootUrl + protoFile.name] = true;
-    };
-    OpenApiProtocol.prototype.loadFile = function (protoFile) {
-        this.builder = protobufjs_1.default.loadProtoFile(protoFile.url, this.builder);
-        this.markFileAsLoadedForImport(protoFile);
-    };
-    OpenApiProtocol.prototype.build = function () {
-        var _this = this;
-        var builder = this.builder;
-        builder.build();
-        var messages = [];
-        var enums = [];
-        builder.ns.children.forEach(function (reflect) {
-            var className = reflect.className;
-            if (className === 'Message') {
-                messages.push(reflect);
+    // TODO: lookupEnum
+    OpenApiProtocol.prototype.getClassByName = function (name) {
+        // if (name_keys.length === 0) {
+        //   throw new Error(
+        //     `Warning: No names: ${this.names} imported from files: ${this.filepaths}`
+        //   )
+        // }
+        try {
+            return this.namespace_root.lookupType(name);
+        }
+        catch (e) {
+            if (e.message.includes('no such type')) {
+                throw new Error("type `" + name + "` not found in files:\n" +
+                    this.version_config.resolve_names.join('\n'));
             }
-            else if (className === 'Enum') {
-                enums.push(reflect);
+            else {
+                throw e;
             }
-        });
-        messages
-            .filter(function (message) {
-            return typeof _this.findPayloadType(message) === 'number';
-        })
-            .forEach(function (message) {
-            var name = message.name;
-            var messageBuilded = builder.build(name);
-            _this.messages[name] = messageBuilded;
-            var payloadType = _this.findPayloadType(message);
-            _this.names[name] = {
-                messageBuilded: messageBuilded,
-                payloadType: payloadType
-            };
-            _this.payloadTypes[payloadType] = {
-                messageBuilded: messageBuilded,
-                name: name
-            };
-        }, this);
-        enums.forEach(function (item) {
-            var name = item.name;
-            enums[name] = builder.build(name);
-        });
-        this.buildWrapper();
-    };
-    OpenApiProtocol.prototype.buildWrapper = function () {
-        var name = 'ProtoMessage';
-        var messageBuilded = this.builder.build(name);
-        this.messages[name] = messageBuilded;
-        this.names[name] = {
-            messageBuilded: messageBuilded,
-            payloadType: undefined
-        };
-    };
-    OpenApiProtocol.prototype.findPayloadType = function (message) {
-        var field = message.children.find(function (field) {
-            return field.name === 'payloadType';
-        });
-        if (field) {
-            return field.defaultValue;
         }
     };
-    OpenApiProtocol.prototype.getMessageByPayloadType = function (payloadType) {
-        this.errorOnPayloadTypeMissing(payloadType);
-        return this.payloadTypes[payloadType].messageBuilded;
+    OpenApiProtocol.prototype.getTypeByClass = function (TypeClass) {
+        var PayloadTypeEnum = this.namespace_root.lookupEnum('ProtoOAPayloadType');
+        console.log(PayloadTypeEnum);
+        return 0;
     };
-    OpenApiProtocol.prototype.getMessageByName = function (name) {
-        this.errorOnNameMissing(name);
-        return this.names[name].messageBuilded;
-    };
-    OpenApiProtocol.prototype.getPayloadTypeByName = function (name) {
-        this.errorOnNameMissing(name);
-        return this.names[name].payloadType;
-    };
-    OpenApiProtocol.prototype.errorOnPayloadTypeMissing = function (payloadType) {
-        var payload_type_keys = Object.keys(this.payloadTypes);
-        if (!payload_type_keys.includes(String(payloadType))) {
-            if (payload_type_keys.length === 0) {
-                throw new Error("Warning: No payload types: " + this.payloadTypes + " imported from files: " + this.filepaths);
-            }
-            throw new Error("Payload type: " + payloadType + " not found in files: " + this.filepaths);
-        }
-    };
-    OpenApiProtocol.prototype.errorOnNameMissing = function (name) {
-        var name_keys = Object.keys(this.names);
-        if (!name_keys.includes(name)) {
-            if (name_keys.length === 0) {
-                throw new Error("Warning: No names: " + this.names + " imported from files: " + this.filepaths);
-            }
-            throw new Error(name + " not found in files: " + this.filepaths);
-        }
+    OpenApiProtocol.prototype.getClassbyType = function (payload_type) {
+        var PayloadTypeEnum = this.namespace_root.lookupEnum('ProtoOAPayloadType');
+        console.log(PayloadTypeEnum);
+        return this.namespace_root.lookupType('ProtoMessage');
     };
     return OpenApiProtocol;
 }());
 exports.OpenApiProtocol = OpenApiProtocol;
+// try {
+//   const main = async () => {
+//     const protocol = new OpenApiProtocol({ version: '60' })
+//     await protocol.load()
+//     const message_1 = protocol.getClassByName('ProtoOAApplicationAuthReq')
+//     console.log('message_1:', message_1)
+//     const message = protocol.getClassByName('foobar')
+//   }
+//   main().then(() => process.exit(0)).catch(console.error)
+// } catch (e) {
+//   console.error(e)
+// }

@@ -1,12 +1,12 @@
-const test = require('ava')
+import test from 'ava'
 
 import { OpenApiProtocol } from './index.js'
 
 const testProtocolForPayload = (t, protocol, payloadName, payload = {}) => {
-  const Message = protocol.getMessageByName(payloadName)
+  const TypeClass = protocol.getClassByName(payloadName)
 
-  const payloadType = protocol.getPayloadTypeByName(payloadName)
-  const message = new Message(payload)
+  const payloadType = protocol.getTypeByClass(TypeClass)
+  const message = TypeClass.create(payload)
   const clientMsgId = 'test'
 
   const encoded_message = protocol.encode(payloadType, message, clientMsgId)
@@ -21,24 +21,22 @@ test('initialized with no params, defaults to version: \'60\'', t => {
   t.is(protocol.version, '60')
 })
 
-test('the protocol can initialize with version: \'60\'', t => {
+test('the protocol can initialize with version: \'60\'', async (t) => {
   const protocol = new OpenApiProtocol({ version: '60' })
-  protocol.load()
-  protocol.build()
+  await protocol.load()
 
   testProtocolForPayload(t, protocol, 'ProtoOAVersionReq')
 })
 
-test('the protocol can initialize with version: \'59\'', t => {
-  const protocol = new OpenApiProtocol({ version: '59' })
-  protocol.load()
-  protocol.build()
+// test('the protocol can initialize with version: \'59\'', async (t) => {
+//   const protocol = new OpenApiProtocol({ version: '59' })
+//   await protocol.load()
 
-  testProtocolForPayload(t, protocol, 'ProtoOAVersionReq')
-  testProtocolForPayload(t, protocol, 'ProtoPingReq', {
-    timestamp: Date.now()
-  })
-})
+//   testProtocolForPayload(t, protocol, 'ProtoOAVersionReq')
+//   testProtocolForPayload(t, protocol, 'ProtoPingReq', {
+//     timestamp: Date.now()
+//   })
+// })
 
 test.todo('#encode')
 test.todo('#wrap')
