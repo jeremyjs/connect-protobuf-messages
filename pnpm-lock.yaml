@@ -1,6 +1,7 @@
 dependencies:
   open-api-protobuf-messages-v59: github.com/jeremyjs/Open-API-2.0-protobuf-messages/a2094f64bf344b97a71e0023397290a0504170b5
   open-api-protobuf-messages-v60: github.com/jeremyjs/Open-API-2.0-protobuf-messages/15fc10c4685cde1c12a827164e0bfbef29a65fc2
+  open-api-protobuf-messages-v61: github.com/jeremyjs/Open-API-2.0-protobuf-messages/9355391a2f8c92884277a867a03ae2920c4d5480
   protobufjs: 4.1.3
 devDependencies:
   '@types/node': 11.12.1
@@ -3490,12 +3491,20 @@ packages:
     dev: false
     name: open-api-2.0-protobuf-messages
     resolution:
+      registry: 'https://registry.npmjs.org/'
       tarball: 'https://codeload.github.com/jeremyjs/Open-API-2.0-protobuf-messages/tar.gz/15fc10c4685cde1c12a827164e0bfbef29a65fc2'
     version: 6.0.1
+  github.com/jeremyjs/Open-API-2.0-protobuf-messages/9355391a2f8c92884277a867a03ae2920c4d5480:
+    dev: false
+    name: open-api-2.0-protobuf-messages
+    resolution:
+      tarball: 'https://codeload.github.com/jeremyjs/Open-API-2.0-protobuf-messages/tar.gz/9355391a2f8c92884277a867a03ae2920c4d5480'
+    version: 6.1.0
   github.com/jeremyjs/Open-API-2.0-protobuf-messages/a2094f64bf344b97a71e0023397290a0504170b5:
     dev: false
     name: open-api-2.0-protobuf-messages
     resolution:
+      registry: 'https://registry.npmjs.org/'
       tarball: 'https://codeload.github.com/jeremyjs/Open-API-2.0-protobuf-messages/tar.gz/a2094f64bf344b97a71e0023397290a0504170b5'
     version: 5.9.2
 specifiers:
@@ -3504,6 +3513,7 @@ specifiers:
   nyc: 13.3.0
   open-api-protobuf-messages-v59: 'jeremyjs/Open-API-2.0-protobuf-messages#v5.9.2'
   open-api-protobuf-messages-v60: 'jeremyjs/Open-API-2.0-protobuf-messages#v6.0.1'
+  open-api-protobuf-messages-v61: 'jeremyjs/Open-API-2.0-protobuf-messages#v6.1.0'
   protobufjs: 4.1.3
   ts-node: 8.0.3
   typescript: 3.4.1

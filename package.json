@@ -25,6 +25,7 @@
   "dependencies": {
     "open-api-protobuf-messages-v59": "jeremyjs/Open-API-2.0-protobuf-messages#v5.9.2",
     "open-api-protobuf-messages-v60": "jeremyjs/Open-API-2.0-protobuf-messages#v6.0.1",
+    "open-api-protobuf-messages-v61": "jeremyjs/Open-API-2.0-protobuf-messages#v6.1.0",
     "protobufjs": "4.1.3"
   },
   "devDependencies": {
